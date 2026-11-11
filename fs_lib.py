@@ -173,9 +173,9 @@ def val_to_units_string(val, base, custom_strings=None):
 			base = 1000
 			unit_strings = [ "", "K", "M", "G", "T", "P", "E", "Z", "Y" ]
 		elif base == 1000:
-			unit_strings = [ " Bytes", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB" ]
+			unit_strings = [ "Bytes", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB" ]
 		elif base == 1024:
-			unit_strings = [ " Bytes", "KiB", "MiB", "GiB", "TiB", "PiB", "EiB", "ZiB", "YiB" ]
+			unit_strings = [ "Bytes", "KiB", "MiB", "GiB", "TiB", "PiB", "EiB", "ZiB", "YiB" ]
 		else:
 			base = 1
 	else:
@@ -184,20 +184,29 @@ def val_to_units_string(val, base, custom_strings=None):
 	if base == 1:
 		return "{}".format(val)
 
+	if val == 0:
+		unit = unit_strings[0].strip()
+		return "0 {}".format(unit) if unit else "0"
+
 	import math
 
 #	print("unit strings: {}".format(unit_strings))
 
+	negative = False
+	if val < 0:
+		negative = True
+		val = -val
+
 	i = int(math.floor(math.log(val, base)))
-	divider = math.pow(base, i)
-	fmt = "{:.0f} {}" if (int(val/divider) == val/divider) else "{:.2f} {}"
-
 	if i >= len(unit_strings):
-		i = 0
-		divider = 1
-		return "{}".format(val)
+		return "-{}".format(val) if negative else "{}".format(val)
 
-	return fmt.format(val/divider, unit_strings[i])
+	divider = math.pow(base, i)
+	unit = unit_strings[i].strip()
+	val_divided = val / divider
+	val_str = "{:.0f}".format(val_divided) if (int(val_divided) == val_divided) else "{:.2f}".format(val_divided)
+	res = "{} {}".format(val_str, unit) if unit else val_str
+	return "-{}".format(res) if negative else res
 
 def get_enum_info(enum_name):
 	try:
