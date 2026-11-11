@@ -254,6 +254,13 @@ def pp_struct_sock(sk, rlvl, ilvl):
 			pass
 
 	# Sub-structures
+	if skc.hasField("skc_net") and skc.skc_net.hasField("net") and not is_err_or_null(skc.skc_net.net):
+		try:
+			print("{}.skc_net.net - ".format(indent_str(ilvl)), end="")
+			pp_struct("net", long(skc.skc_net.net), rlvl=rlvl, ilvl=ilvl)
+		except:
+			pass
+
 	if sk.hasField("sk_socket") and sk.sk_socket and not is_err_or_null(sk.sk_socket):
 		pp_struct_member(sk, "sk_socket", rlvl=rlvl, ilvl=ilvl)
 
