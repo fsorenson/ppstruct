@@ -27,6 +27,19 @@ def pp_struct_rpc_clnt(rpc_clnt, rlvl, ilvl):
 	pp_struct_member(rpc_clnt, "cl_auth", rlvl=rlvl, ilvl=ilvl)
 	pp_struct_member(rpc_clnt, "cl_parent", rlvl=rlvl, ilvl=ilvl)
 
+	if rpc_clnt.hasField("cl_tasks"):
+		try:
+			tasks = readSUListFromHead(Addr(rpc_clnt.cl_tasks), "tk_task", "struct rpc_task")
+			if tasks:
+				print("{}.cl_tasks ({} tasks):".format(indent_str(ilvl), len(tasks)))
+				for t in tasks:
+					print("{}".format(indent_str(ilvl + 1)), end="")
+					pp_struct("rpc_task", long(t), rlvl=rlvl, ilvl=ilvl + 1)
+			else:
+				print("{}.cl_tasks = empty".format(indent_str(ilvl)))
+		except:
+			pass
+
 
 if __name__ == "__main__":
 	program_display_struct(pp_struct_rpc_clnt)
