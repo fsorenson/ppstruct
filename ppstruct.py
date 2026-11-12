@@ -90,7 +90,6 @@ def pp_struct__parse_cmdline():
 		return ns
 
 	cmd_opts = parse_cmdline(sys.argv[1:], **kw)
-	print("{}".format(cmd_opts))
 	return cmd_opts
 
 def pp_struct_cmd():
