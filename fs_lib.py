@@ -757,7 +757,10 @@ def struct_printer(func):
 			found_label = False
 			for lf in label_fields:
 				try:
-					label = obj.Eval(lf)
+					if callable(lf):
+						label = lf(obj)
+					else:
+						label = obj.Eval(lf)
 					if label:
 						ot = obj__type(label)
 						if ot == 'struct' and obj__struct_type(label) == 'qstr':
