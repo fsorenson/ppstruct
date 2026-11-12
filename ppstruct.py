@@ -107,7 +107,6 @@ def pp_struct_cmd():
 			addr = get_arg_value(addr_str)
 			if addr:
 				pp_struct(cmd_opts.struct_type, addr, rlvl=cmd_opts.recurse, ilvl=0)
-		print("ppstruct_prune2: {}".format(ppstruct_vars['pp_struct_prune']))
 	else:
 		print("Unable to ppstruct '{type}'".format(type=cmd_opts.struct_type))
 
