@@ -519,9 +519,11 @@ def pp_struct(type, addr, rlvl=1, ilvl=0):
 
 	if not func == False:
 		func(addr, rlvl=rlvl, ilvl=ilvl)
+		return 0
 	else:
 #		print("{}{} - not implemented".format(indent_str(ilvl), fmt_struct_addr(type, addr)))
 		print(" {} - not implemented".format(fmt_struct_addr(type, addr)))
+		return -1
 
 def pp_struct_old3(type, addr, rlvl=1, ilvl=0):
 	pp_func_name = "pp_struct_%s" % type
