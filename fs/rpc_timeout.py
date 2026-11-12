@@ -10,6 +10,15 @@ from fs_lib import *
 def pp_struct_rpc_timeout(to, rlvl, ilvl):
 	to = readSU("struct rpc_timeout", to)
 
-	print("{}.to_initval = {} ({} sec), .to_retries = {}".format(indent_str(ilvl), to.to_initval, to.to_initval/1000, to.to_retries))
+	items = []
+	if to.hasField("to_initval"):
+		items.append(".to_initval = {} ({} sec)".format(to.to_initval, float(to.to_initval) / 1000))
+	if to.hasField("to_retries"):
+		items.append(".to_retries = {}".format(to.to_retries))
+	if to.hasField("to_maxval") and to.hasField("to_initval") and to.to_maxval != to.to_initval:
+		items.append(".to_maxval = {} ({} sec)".format(to.to_maxval, float(to.to_maxval) / 1000))
+
+	if items:
+		print(" - {}".format(", ".join(items)))
 
 # vim: sw=4 ts=4 noexpandtab
