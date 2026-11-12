@@ -4,32 +4,32 @@ from __future__ import print_function
 from fs_lib import *
 
 RPC_TASK_FLAGS_C = '''
-#define RPC_TASK_ASYNC              0
-#define RPC_TASK_SWAPPER            1
-#define RPC_TASK_MOVEABLE           2
-#define RPC_TASK_NULLCREDS          4
-#define RPC_CALL_MAJORSEEN          5
-#define RPC_TASK_NETUNREACH_FATAL   6
-#define RPC_TASK_DYNAMIC            7
-#define RPC_TASK_NO_ROUND_ROBIN     8
-#define RPC_TASK_SOFT               9
-#define RPC_TASK_SOFTCONN           10
-#define RPC_TASK_SENT               11
-#define RPC_TASK_TIMEOUT            12
-#define RPC_TASK_NOCONNECT          13
-#define RPC_TASK_NO_RETRANS_TIMEOUT 14
-#define RPC_TASK_CRED_NOREF         15
+#define ASYNC              0
+#define SWAPPER            1
+#define MOVEABLE           2
+#define NULLCREDS          4
+#define MAJORSEEN          5
+#define NETUNREACH_FATAL   6
+#define DYNAMIC            7
+#define NO_ROUND_ROBIN     8
+#define SOFT               9
+#define SOFTCONN           10
+#define SENT               11
+#define TIMEOUT            12
+#define NOCONNECT          13
+#define NO_RETRANS_TIMEOUT 14
+#define CRED_NOREF         15
 '''
 RPC_TASK_FLAGS = CDefine(RPC_TASK_FLAGS_C)
 
 RPC_TASK_RUNSTATE_C = '''
-#define RPC_TASK_RUNNING            0
-#define RPC_TASK_QUEUED             1
-#define RPC_TASK_ACTIVE             2
-#define RPC_TASK_NEED_XMIT          3
-#define RPC_TASK_NEED_RECV          4
-#define RPC_TASK_MSG_PIN_WAIT       5
-#define RPC_TASK_SIGNALLED          6
+#define RUNNING            0
+#define QUEUED             1
+#define ACTIVE             2
+#define NEED_XMIT          3
+#define NEED_RECV          4
+#define MSG_PIN_WAIT       5
+#define SIGNALLED          6
 '''
 RPC_TASK_RUNSTATE = CDefine(RPC_TASK_RUNSTATE_C)
 
@@ -39,6 +39,42 @@ RPC_PRIORITIES = {
 	2: "HIGH",
 	3: "PRIVILEGED",
 }
+
+
+def format_elapsed_time(elapsed_ns):
+	if elapsed_ns < 0:
+		elapsed_ns = 0
+	ns = elapsed_ns % 1000000000
+	total_secs = elapsed_ns // 1000000000
+	secs = total_secs % 60
+	total_mins = total_secs // 60
+	mins = total_mins % 60
+	hours = total_mins // 60
+
+	if hours > 0:
+		return "{:d}:{:02d}:{:02d}.{:09d} ago".format(hours, mins, secs, ns)
+	elif mins > 0:
+		return "{:d}:{:02d}.{:09d} ago".format(mins, secs, ns)
+	else:
+		return "{:d}.{:09d} ago".format(secs, ns)
+
+
+def get_current_time_ns():
+	if symbol_exists("last_jiffies_update"):
+		try:
+			return int(readSymbol("last_jiffies_update"))
+		except:
+			pass
+	if symbol_exists("jiffies_64"):
+		try:
+			j = int(readSymbol("jiffies_64"))
+			hz = 1000
+			if symbol_exists("CONFIG_HZ"):
+				hz = int(readSymbol("CONFIG_HZ"))
+			return int(j * (1000000000 / hz))
+		except:
+			pass
+	return None
 
 
 def rpc_waitqueue_name(task, wq_addr):
@@ -64,65 +100,106 @@ def rpc_waitqueue_name(task, wq_addr):
 	return None
 
 
-@struct_label_string(("tk_pid",))
+def rpc_task_label(task):
+	if task.hasField("tk_rqstp") and task.tk_rqstp and not is_err_or_null(task.tk_rqstp):
+		try:
+			rq = readSU("struct rpc_rqst", task.tk_rqstp)
+			return "0x{:08x}".format(int(rq.rq_xid))
+		except:
+			pass
+	if task.hasField("tk_pid") and task.tk_pid:
+		return "pid:{}".format(task.tk_pid)
+	return None
+
+
+@struct_label_string(rpc_task_label)
 @struct_printer
 def pp_struct_rpc_task(task, rlvl, ilvl):
 	task = readSU("struct rpc_task", task)
 
-	if task.hasField("tk_pid"):
-		print("{}.tk_pid = {}".format(indent_str(ilvl), task.tk_pid))
-
+	line1 = []
 	if task.hasField("tk_status"):
-		print("{}.tk_status = {}".format(indent_str(ilvl), task.tk_status))
-
+		line1.append(".tk_status = {}".format(task.tk_status))
 	if task.hasField("tk_rpc_status"):
-		print("{}.tk_rpc_status = {}".format(indent_str(ilvl), task.tk_rpc_status))
-
-	if task.hasField("tk_flags"):
-		try:
-			fl = int(task.tk_flags)
-			fl_str = flags_to_string(fl, RPC_TASK_FLAGS)
-			print("{}.tk_flags = 0x{:04x} - {}".format(indent_str(ilvl), fl, fl_str))
-		except:
-			pass
-
-	if task.hasField("tk_runstate"):
-		try:
-			rs = int(task.tk_runstate)
-			rs_str = flags_to_string(rs, RPC_TASK_RUNSTATE)
-			print("{}.tk_runstate = 0x{:x} - {}".format(indent_str(ilvl), rs, rs_str))
-		except:
-			pass
-
+		line1.append(".tk_rpc_status = {}".format(task.tk_rpc_status))
+	if task.hasField("tk_owner") and task.tk_owner:
+		line1.append(".tk_owner = {}".format(task.tk_owner))
 	if task.hasField("tk_priority"):
 		try:
 			prio = int(task.tk_priority)
 			prio_name = RPC_PRIORITIES.get(prio, "unknown")
-			print("{}.tk_priority = {} ({})".format(indent_str(ilvl), prio, prio_name))
+			line1.append(".tk_priority = {} ({})".format(prio, prio_name))
 		except:
 			pass
-
-	if task.hasField("tk_owner") and task.tk_owner:
-		print("{}.tk_owner = {}".format(indent_str(ilvl), task.tk_owner))
-
 	if task.hasField("tk_count"):
 		try:
-			cnt = int(task.tk_count.counter)
-			print("{}.tk_count = {}".format(indent_str(ilvl), cnt))
+			opts = ppstruct_vars.pp_struct_opts
+			show_counts = opts.counts if hasattr(opts, 'counts') else opts.get('counts', False)
+			if show_counts:
+				line1.append(".tk_count = {}".format(int(task.tk_count.counter)))
 		except:
 			pass
+	if line1:
+		print("{}{}".format(indent_str(ilvl), ", ".join(line1)))
 
+	line2 = []
+	if task.hasField("tk_flags"):
+		try:
+			fl = int(task.tk_flags)
+			fl_str = flags_to_string(fl, RPC_TASK_FLAGS)
+			line2.append(".tk_flags = 0x{:04x} - {}".format(fl, fl_str))
+		except:
+			pass
+	if task.hasField("tk_runstate"):
+		try:
+			rs = int(task.tk_runstate)
+			rs_str = flags_to_string(rs, RPC_TASK_RUNSTATE)
+			line2.append(".tk_runstate = 0x{:x} - {}".format(rs, rs_str))
+		except:
+			pass
+	if line2:
+		print("{}{}".format(indent_str(ilvl), ", ".join(line2)))
+
+	line3 = []
+	if task.hasField("tk_timeout") and task.tk_timeout:
+		line3.append(".tk_timeout = {}".format(task.tk_timeout))
+	if task.hasField("tk_start"):
+		try:
+			now_ns = get_current_time_ns()
+			if now_ns is not None:
+				elapsed_ns = now_ns - int(task.tk_start)
+				line3.append(".tk_start = {}".format(format_elapsed_time(elapsed_ns)))
+			else:
+				line3.append(".tk_start = {} ns".format(int(task.tk_start)))
+		except:
+			pass
+	if task.hasField("tk_timeouts") and task.tk_timeouts:
+		line3.append(".tk_timeouts = {}".format(task.tk_timeouts))
+	if line3:
+		print("{}{}".format(indent_str(ilvl), ", ".join(line3)))
+
+	# Only display retries if non-default (< 2)
+	retries = []
+	if task.hasField("tk_garb_retry") and task.tk_garb_retry < 2:
+		retries.append("garb={}".format(task.tk_garb_retry))
+	if task.hasField("tk_cred_retry") and task.tk_cred_retry < 2:
+		retries.append("cred={}".format(task.tk_cred_retry))
+	if retries:
+		print("{}.tk_retries: {}".format(indent_str(ilvl), ", ".join(retries)))
+
+	line4 = []
 	if task.hasField("tk_action") and task.tk_action:
 		act_addr = long(task.tk_action)
 		act_sym = addr2sym(act_addr)
 		act_str = " <{}>".format(act_sym) if act_sym else ""
-		print("{}.tk_action = 0x{:x}{}".format(indent_str(ilvl), act_addr, act_str))
-
+		line4.append(".tk_action = 0x{:x}{}".format(act_addr, act_str))
 	if task.hasField("tk_callback") and task.tk_callback:
 		cb_addr = long(task.tk_callback)
 		cb_sym = addr2sym(cb_addr)
 		cb_str = " <{}>".format(cb_sym) if cb_sym else ""
-		print("{}.tk_callback = 0x{:x}{}".format(indent_str(ilvl), cb_addr, cb_str))
+		line4.append(".tk_callback = 0x{:x}{}".format(cb_addr, cb_str))
+	if line4:
+		print("{}{}".format(indent_str(ilvl), ", ".join(line4)))
 
 	if task.hasField("tk_ops") and task.tk_ops and not is_err_or_null(task.tk_ops):
 		try:
@@ -171,6 +248,7 @@ def pp_struct_rpc_task(task, rlvl, ilvl):
 		except:
 			pass
 
+	line_wq = []
 	if task.hasField("tk_waitqueue") and task.tk_waitqueue and not is_err_or_null(task.tk_waitqueue):
 		wq_val = long(task.tk_waitqueue)
 		wq_name = rpc_waitqueue_name(task, wq_val)
@@ -180,35 +258,15 @@ def pp_struct_rpc_task(task, rlvl, ilvl):
 			wq_info += " [qlen={}]".format(wq.qlen)
 		except:
 			pass
-		print("{}.tk_waitqueue(struct rpc_wait_queue *)0x{:x}{}".format(indent_str(ilvl), wq_val, wq_info))
-
+		line_wq.append(".tk_waitqueue(struct rpc_wait_queue *)0x{:x}{}".format(wq_val, wq_info))
 	if task.hasField("tk_workqueue") and task.tk_workqueue and not is_err_or_null(task.tk_workqueue):
 		try:
 			wq = readSU("struct workqueue_struct", task.tk_workqueue)
-			print("{}.tk_workqueue = '{}' ((struct workqueue_struct *)0x{:x})".format(
-				indent_str(ilvl), wq.name, long(task.tk_workqueue)))
+			line_wq.append(".tk_workqueue = '{}'".format(wq.name))
 		except:
-			print("{}.tk_workqueue = (struct workqueue_struct *)0x{:x}".format(
-				indent_str(ilvl), long(task.tk_workqueue)))
-
-	if task.hasField("tk_timeout") and task.tk_timeout:
-		print("{}.tk_timeout = {}".format(indent_str(ilvl), task.tk_timeout))
-
-	if task.hasField("tk_timeouts") and task.tk_timeouts:
-		print("{}.tk_timeouts = {}".format(indent_str(ilvl), task.tk_timeouts))
-
-	if task.hasField("tk_start"):
-		try:
-			t_ns = int(task.tk_start)
-			print("{}.tk_start = {} ns".format(indent_str(ilvl), t_ns))
-		except:
-			pass
-
-	if task.hasField("tk_garb_retry") and task.tk_garb_retry:
-		print("{}.tk_garb_retry = {}".format(indent_str(ilvl), task.tk_garb_retry))
-
-	if task.hasField("tk_cred_retry") and task.tk_cred_retry:
-		print("{}.tk_cred_retry = {}".format(indent_str(ilvl), task.tk_cred_retry))
+			line_wq.append(".tk_workqueue = (struct workqueue_struct *)0x{:x}".format(long(task.tk_workqueue)))
+	if line_wq:
+		print("{}{}".format(indent_str(ilvl), ", ".join(line_wq)))
 
 	pp_struct_member(task, "tk_client", rlvl=rlvl, ilvl=ilvl)
 	pp_struct_member(task, "tk_xprt", rlvl=rlvl, ilvl=ilvl)
