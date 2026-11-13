@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-#from fs_lib import *
+from fs_lib import readSU, container_of, long
 
 fst_info = {
 	'xfs' : {
@@ -159,6 +159,34 @@ def get_filesystem_sfsi_type(fstype_name):
 		if this_fst_info is not None and this_fst_info['s_fs_info'] is not None:
 			sfsi_type = this_fst_info['s_fs_info']
 			return sfsi_type
+	except:
+		pass
+	return None
+
+def container_of_cast(addr, struct, member):
+	return readSU("struct " + struct, container_of(long(addr), "struct " + struct, member))
+
+def get_filesystem_inode(addr, fstype_name=None):
+	if not addr:
+		return None
+	try:
+		if fstype_name is None:
+			if hasattr(addr, 'i_sb') and addr.i_sb:
+				fstype_name = addr.i_sb.s_type.name
+			else:
+				inode = readSU("struct inode", long(addr))
+				fstype_name = inode.i_sb.s_type.name
+
+		this_fst_info = fst_info.get(fstype_name)
+		if this_fst_info is None:
+			this_fst_info = filesystem_specific_inode_info.get(fstype_name)
+
+		if this_fst_info:
+			inode_type = this_fst_info.get('inode_type')
+			inode_member = this_fst_info.get('inode_member')
+			ino_embedded = this_fst_info.get('ino_embedded', 1)
+			if inode_type and inode_member and ino_embedded:
+				return container_of_cast(addr, inode_type, inode_member)
 	except:
 		pass
 	return None

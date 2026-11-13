@@ -3,6 +3,7 @@
 from __future__ import print_function
 
 from fs_lib import *
+from fs.fst_info import get_filesystem_inode
 
 
 INO_STATE_C = '''
@@ -279,6 +280,11 @@ def pp_struct_inode(inode, rlvl, ilvl):
 				pp_struct("dentry", dentry, rlvl=rlvl, ilvl=ilvl)
 			except:
 				print("{ind}{i} - unable to display dentry (list_addr = 0x{ent:016x})".format(ind=indent_str(ilvl), i=i, ent=tmp_entry))
+
+	fs_inode = get_filesystem_inode(inode)
+	if fs_inode:
+		itype = obj__struct_type(fs_inode)
+		print("{}{}".format(indent_str(ilvl), fmt_struct_addr(itype, long(fs_inode))))
 
 
 if __name__ == "__main__":
