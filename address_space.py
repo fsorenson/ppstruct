@@ -16,12 +16,22 @@ def pp_struct_address_space(aspace, rlvl, ilvl):
 	nrpages = aspace.nrpages
 	print("{}.nrpages = {p} = {b} bytes".format(indent_str(ilvl), p=nrpages, b=(nrpages * PAGE_SIZE)))
 
+	tree_type_flags = {
+		'radix_tree_root': 'ra',
+		'xarray': 'x',
+	}
+
+	tree_member = None
 	if struct__has_member("address_space", "page_tree"):
-		page_tree = aspace.page_tree
-		print("{}.page_tree: tree -t ra 0x{a:016x}".format(indent_str(ilvl), a=aspace.page_tree))
+		tree_member = "page_tree"
 	elif struct__has_member("address_space", "i_pages"):
-		i_pages = aspace.i_pages
-		print("{}.i_pages: tree -t ra 0x{a:016x}".format(indent_str(ilvl), a=aspace.i_pages))
+		tree_member = "i_pages"
+
+	if tree_member:
+		tree_obj = getattr(aspace, tree_member)
+		flag = tree_type_flags.get(obj__struct_type(tree_obj), 'x' if obj__struct_type(tree_obj) == 'xarray' else 'ra')
+		print("{ind}.{mbr}: tree -t {flag} 0x{a:016x}".format(
+			ind=indent_str(ilvl), mbr=tree_member, flag=flag, a=tree_obj))
 
 
 	pp_struct_member(aspace, "host", rlvl=rlvl, ilvl=ilvl)
