@@ -42,7 +42,7 @@ def pp_struct_xfs_buf(xfs_buf, rlvl, ilvl):
 
 #	pp_struct_member(xfs_buf, "b_target", rlvl=rlvl, ilvl=ilvl)
 	b_target = xfs_buf.b_target
-	print("{}.b_target".format(indent_str(ilvl)), end='')
+	print("{}.b_target ".format(indent_str(ilvl)), end='')
 	pp_struct("xfs_buftarg", b_target, rlvl=rlvl, ilvl=ilvl)
 
 	pp_struct_member(xfs_buf, "b_pag", rlvl=rlvl, ilvl=ilvl)

@@ -45,7 +45,7 @@ def pp_struct_net(net, rlvl, ilvl):
 			u_addr = long(net.user_ns)
 			u_sym = addr2sym(u_addr)
 			u_sym_str = " <{}>".format(u_sym) if u_sym else ""
-			print("{}.user_ns(struct user_namespace *)0x{:x}{}".format(indent_str(ilvl), u_addr, u_sym_str))
+			print("{}.user_ns (struct user_namespace *)0x{:x}{}".format(indent_str(ilvl), u_addr, u_sym_str))
 		except:
 			pass
 

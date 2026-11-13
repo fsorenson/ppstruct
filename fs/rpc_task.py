@@ -215,7 +215,7 @@ def pp_struct_rpc_task(task, rlvl, ilvl):
 				sym = addr2sym(long(ops.rpc_release))
 				ops_parts.append("release: {}".format(sym if sym else hex(long(ops.rpc_release))))
 			ops_desc = " ({})".format(", ".join(ops_parts)) if ops_parts else ""
-			print("{}.tk_ops(struct rpc_call_ops *)0x{:x}{}".format(indent_str(ilvl), long(task.tk_ops), ops_desc))
+			print("{}.tk_ops (struct rpc_call_ops *)0x{:x}{}".format(indent_str(ilvl), long(task.tk_ops), ops_desc))
 		except:
 			pass
 
@@ -258,7 +258,7 @@ def pp_struct_rpc_task(task, rlvl, ilvl):
 			wq_info += " [qlen={}]".format(wq.qlen)
 		except:
 			pass
-		line_wq.append(".tk_waitqueue(struct rpc_wait_queue *)0x{:x}{}".format(wq_val, wq_info))
+		line_wq.append(".tk_waitqueue (struct rpc_wait_queue *)0x{:x}{}".format(wq_val, wq_info))
 	if task.hasField("tk_workqueue") and task.tk_workqueue and not is_err_or_null(task.tk_workqueue):
 		try:
 			wq = readSU("struct workqueue_struct", task.tk_workqueue)

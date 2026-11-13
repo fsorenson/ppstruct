@@ -24,7 +24,7 @@ def pp_struct_mount(mount, rlvl, ilvl):
 
 	if mount.hasField("mnt_parent"):
 		if long(mount.mnt_parent) == long(mount):
-			print("{}.mnt_parent(struct mount *)0x{:x} - (self/root)".format(indent_str(ilvl), long(mount.mnt_parent)))
+			print("{}.mnt_parent (struct mount *)0x{:x} - (self/root)".format(indent_str(ilvl), long(mount.mnt_parent)))
 		else:
 			pp_struct_member(mount, "mnt_parent", rlvl=rlvl, ilvl=ilvl)
 

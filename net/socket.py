@@ -83,7 +83,7 @@ def pp_struct_socket(sock, rlvl, ilvl):
 				fam = int(sock.ops.family)
 				fam_name = AF_FAMILIES.get(fam, "UNKNOWN")
 				fam_str = " (family: {} - {})".format(fam, fam_name)
-			print("{}.ops(struct proto_ops *)0x{:x}{}{}".format(indent_str(ilvl), ops_addr, sym_str, fam_str))
+			print("{}.ops (struct proto_ops *)0x{:x}{}{}".format(indent_str(ilvl), ops_addr, sym_str, fam_str))
 		except:
 			pass
 

@@ -522,7 +522,7 @@ def pp_struct(type, addr, rlvl=1, ilvl=0):
 		return 0
 	else:
 #		print("{}{} - not implemented".format(indent_str(ilvl), fmt_struct_addr(type, addr)))
-		print(" {} - not implemented".format(fmt_struct_addr(type, addr)))
+		print("{} - not implemented".format(fmt_struct_addr(type, addr)))
 		return -1
 
 def pp_struct_old3(type, addr, rlvl=1, ilvl=0):
@@ -642,7 +642,7 @@ def pp_struct_member(addr, member_name, rlvl=1, ilvl=0):
 		return
 #	if member_name == "i_mount":
 #		print("***", end='')
-	print("{}.{}".format(indent_str(ilvl), member_name), end="")
+	print("{}.{} ".format(indent_str(ilvl), member_name), end="")
 	pp_struct(member_type, member_addr, rlvl, ilvl)
 
 

@@ -71,7 +71,7 @@ def pp_struct_super_block(sb, rlvl, ilvl):
 	if sfsi_type:
 		if not ppstruct_func_exists(sfsi_type):
 			print("{}filesystem type '{}' has s_fs_info of type '{}'".format(indent_str(ilvl), t_name, sfsi_type))
-		print("{}.s_fs_info".format(indent_str(ilvl)), end="")
+		print("{}.s_fs_info ".format(indent_str(ilvl)), end="")
 		pp_struct(sfsi_type, sb.s_fs_info, ilvl=ilvl, rlvl=rlvl)
 
 
