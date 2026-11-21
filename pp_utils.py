@@ -53,14 +53,7 @@ def decode_sockaddr_storage(ksockaddr):
 	return None
 
 def obj_is_inttype(obj):
-	if type(obj) == type(0):
-		return 1
-	try:
-		if type(obj) == type(0):
-			return 1
-	except:
-		pass
-	return 0
+	return isinstance(obj, int)
 
 def obj_is_floattype(obj):
 	return isinstance(obj, float)
@@ -176,8 +169,7 @@ def val_to_units_string(val, base, custom_strings=None):
 
 def get_enum_info(enum_name):
 	try:
-		_S_enum_info = EnumInfo("enum " + enum_name)
-		return _S_enum_info
+		return EnumInfo("enum " + enum_name)
 	except:
 		return None
 
